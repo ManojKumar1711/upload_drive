@@ -1,33 +1,61 @@
-from django.shortcuts import render,redirect
-from django.views.generic import TemplateView
+from django.shortcuts import render, redirect
+from django.views.generic import TemplateView, ListView, CreateView
 from django.core.files.storage import FileSystemStorage
-from .forms import FileForm
-from .models import File
-# Create your views here.
+from django.urls import reverse_lazy
+
+from .forms import BookForm
+from .models import Book
 
 
-def home(request):
-    return render(request,"breeze/base.html")
+class Home(TemplateView):
+    template_name = 'breeze/home.html'
+
 
 def upload(request):
     context = {}
     if request.method == 'POST':
         uploaded_file = request.FILES['document']
         fs = FileSystemStorage()
-        name = fs.save(uploaded_file.name,uploaded_file)
+        name = fs.save(uploaded_file.name, uploaded_file)
         context['url'] = fs.url(name)
-    return render(request,'breeze/upload.html',context)
+    return render(request, 'breeze/upload.html', context)
 
-def files(request):
-    files = File.objects.all()
-    return render(request,'breeze/file_list.html',{'files':files})
 
-def upload_file(request):
+def book_list(request):
+    books = Book.objects.all()
+    return render(request, 'breeze/book_list.html', {
+        'books': books
+    })
+
+
+def upload_book(request):
     if request.method == 'POST':
-        form = FileForm(request.POST,request.FILES)
+        form = BookForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            return redirect('files')
+            return redirect('book_list')
     else:
-        form = FileForm()
-    return render(request,'breeze/upload_file.html',{'form':form})
+        form = BookForm()
+    return render(request, 'breeze/upload_book.html', {
+        'form': form
+    })
+
+
+def delete_book(request, pk):
+    if request.method == 'POST':
+        book = Book.objects.get(pk=pk)
+        book.delete()
+    return redirect('book_list')
+
+
+class BookListView(ListView):
+    model = Book
+    template_name = 'breeze/class_book_list.html'
+    context_object_name = 'books'
+
+
+class UploadBookView(CreateView):
+    model = Book
+    form_class = BookForm
+    success_url = reverse_lazy('class_book_list')
+    template_name = 'breeze/upload_book.html'

@@ -1,8 +1,9 @@
 from django import forms
-from .models import File
 
-class FileForm(forms.ModelForm):
+from .models import Book
+
+
+class BookForm(forms.ModelForm):
     class Meta:
-        model = File
-        fields = {'title','owner_name','file'}
-
+        model = Book
+        fields = ('title', 'author', 'pdf', 'cover')
